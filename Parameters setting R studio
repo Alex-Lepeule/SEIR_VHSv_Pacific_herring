@@ -1,0 +1,223 @@
+####Library required ################
+
+library(ggplot2)
+library(gridExtra)
+library(grid)
+library(scales)
+
+#############################################################################################################################
+######################## Set of the time step and the variation of temperature as function of time ##########################
+#############################################################################################################################
+
+endT = 12 #length
+deltaT = 1/30 #time step
+time = seq(0,endT,by = deltaT)
+temp = 2.95*sin(time*0.55)+11.75 # temp = f(time)
+
+#############################################################################################################################
+############################################## Parameters variation #########################################################
+#############################################################################################################################
+
+beta <-matrix(0.92,nrow = length(time))
+sigma <- matrix(0.24,ncol= 1, nrow = length(time))
+alpha <- matrix(-0.008839*temp+0.132910,nrow = length(time))
+gamma <- matrix(0.01075*temp-0.08605,nrow = length(time))
+r <- matrix(0.01895*temp-0.04254,nrow = length(time))
+c <- matrix((-0.6924)*temp+(15.1082),nrow = length(time))#multiply by 0.1 to show the concentration in PFU/L
+recoshed <- matrix(1.8, nrow = length(time))
+f <- data.frame(recoshed, temp)
+f$recoshed <- ifelse(f$temp > 9, 0, f$recoshed)
+f <- f$recoshed
+mu<- matrix(0.0008, ncol= 1, nrow = length(time))
+param <- data.frame(beta, 
+                    sigma, 
+                    alpha, 
+                    gamma,
+                    r,
+                    c,
+                    f,
+                    mu)
+
+
+#############################################################################################################################
+############################################### Mortality rate ##############################################################
+#############################################################################################################################
+
+# Creation of the data frame
+alphaE <- data.frame(alpha, temp) 
+###### ggplot setting
+alphaPlot <- ggplot(alphaE, aes(x = temp))+
+  # set the value of alpha for each constant temperature
+  # the parameters are calculated from Hershberger et al. 2013 
+  geom_line(aes(y = alpha), colour = "brown1", size = 10)+
+  geom_point(aes(y = 0.061,x = 8.8), colour = "black", size =30)+ 
+  geom_point(aes(y = 0.024,x = 11.2), colour = "black", size =30)+ 
+  geom_point(aes(y = 0.007,x = 14.7), colour = "black", size =30)+
+  ######## Set name of Y axis
+  ylab(label = "
+  α (fish*day-1)
+       ")+
+  ############ panel style
+  theme_classic() +
+  theme(panel.border = element_rect(color = "black", fill = NA, linewidth = 6),
+        panel.background = element_rect(fill = "white"))+
+  theme(axis.line = element_line(linewidth = 2))+
+  ######## Set name of X axis
+  xlab(label = "
+  Temperature (°C)
+       ")+
+  #scale on high definition
+  theme(axis.text=element_text(size=100),
+        axis.title=element_text(size=100,face="bold"),
+        title =  element_text(size = 100))
+
+# linear regression and fitted Rsquare
+summary(lm(c(0.088,0.06,0.016)~c(8.8,11.2,14.7)))
+
+#############################################################################################################################
+############################################### Recovery rate ###############################################################
+#############################################################################################################################
+
+# Creation of the data frame
+gammaE <- data.frame(gamma, temp) 
+###### ggplot setting
+gammaPlot <- ggplot(gammaE, aes(x = temp))+
+  # set the value of gamma for each constant temperature
+  # the parameters are calculated from Hershberger et al. 2013 
+  geom_line(aes(y = gamma), colour = "brown1", size = 10)+
+  geom_point(aes(y = 0.01,x = 8.8), colour = "black", size =30)+ 
+  geom_point(aes(y = 0.032,x = 11.2), colour = "black", size =30)+ 
+  geom_point(aes(y = 0.073,x = 14.7), colour = "black", size =30)+
+  ######## Set name of Y axis
+  ylab(label = "
+  γ (fish*day-1)
+       ")+
+  ############ panel style
+  theme_classic() +
+  theme(panel.border = element_rect(color = "black", fill = NA, linewidth =  6),
+        panel.background = element_rect(fill = "white"))+                   
+  theme(axis.line = element_line(linewidth = 2))+
+  ######## Set name of X axis
+  xlab(label = "
+  Temperature (°C)
+       ")+
+  #scale on high definition
+  theme(axis.text=element_text(size=100),
+        axis.title=element_text(size=100,face="bold"),
+        title =  element_text(size = 100))
+# linear regression and fitted Rsquare
+summary(lm(c(0.032,0.08,0.23)~c(8.8,11.2,14.7)))
+
+#############################################################################################################################
+############################################### Infected shedding rate ######################################################
+#############################################################################################################################
+
+# Creation of the data frame
+cE <- data.frame(c, temp)
+###### ggplot setting
+cPlot <- ggplot(cE, aes(x = temp))+
+  # set the value of teta for each constant temperature
+  # the parameters are calculated from Hershberger et al. 2013
+  geom_line(aes(y = c), colour = "brown1", size = 10)+
+  geom_point(aes(y = 9.7,x = 8.8), colour = "black", size =30)+
+  geom_point(aes(y = 6.2,x = 11.2), colour = "black", size =30)+ 
+  geom_point(aes(y = 5.4,x = 14.7), colour = "black", size =30)+
+  ######## Set name of Y axis
+  ylab(label = "
+  δ (PFU/fish/day)
+       ")+
+  ############ panel style
+  theme_classic() +
+  scale_y_continuous(labels = label_number(accuracy = 0.01))+
+  theme(panel.border = element_rect(color = "black", fill = NA, linewidth = 6),
+        panel.background = element_rect(fill = "white"))+
+  theme(axis.line = element_line(linewidth = 2))+
+  ######## Set name of X axis
+  xlab(label = "
+       Temperature (°C)
+       ")+
+  #scale on high definition
+  theme(axis.text=element_text(size=100),
+        axis.title=element_text(size=100,face="bold"),
+        title =  element_text(size = 100))
+# linear regression and fitted Rsquare
+summary(lm(c(9.7,6.2,5.4)~c(8.8,11.2,14.7)))
+
+#############################################################################################################################
+############################################### Inactivation rate ###########################################################
+#############################################################################################################################
+
+# Creation of the data frame
+rE <- data.frame(r, temp)
+###### ggplot setting
+rPlot <- ggplot(rE, aes(x = temp))+
+  # set the value of tau for each constant temperature
+  # the parameters are calculated from Hawley and Garver 2008
+  geom_line(aes(y = r), colour = "brown1", size = 10)+
+  geom_point(aes(y = 0.13,x = 8.8), colour = "black", size =30)+
+  geom_point(aes(y = 0.16,x = 11.2), colour = "black", size =30)+
+  geom_point(aes(y = 0.24,x = 14.7), colour = "black", size =30)+
+  ######## Set name of Y axis
+  ylab(label = "
+  τ (PFU*day-1)
+       ")+
+  ############ panel style
+  theme_classic() +
+  theme(panel.border = element_rect(color = "black", fill = NA, linewidth = 6),
+        panel.background = element_rect(fill = "white"))+
+  theme(axis.line = element_line(linewidth = 2))+
+  ######## Set name of X axis
+  xlab(label = "
+  Temperature (°C)
+       ")+
+  #scale on high definition
+  theme(axis.text=element_text(size=100),
+        axis.title=element_text(size=100,face="bold"), 
+        title =  element_text(size = 100))
+# linear regression and fitted Rsquare
+summary(lm(c(0.13,0.16,0.24)~c(8.8,11.2,14.7)))
+
+#############################################################################################################################
+############################################### Carrier shedding rate #######################################################
+#############################################################################################################################
+
+# Creation of the data frame
+fE <- data.frame(f,temp)
+###### ggplot setting
+fPlot <- ggplot(fE, aes(x = temp))+
+  # set the value of phi for each constant temperature
+  # the parameters are calculated from Hershberger et al. 2021
+  geom_line(aes(y = f), colour = "brown1", size = 10)+
+  geom_point(aes(y = 1.8,x = 8.8), colour = "black", size =30)+
+  geom_point(aes(y = 0,x = 11.2), colour = "black", size =30)+  
+  geom_point(aes(y = 0,x = 14.7), colour = "black", size =30)+
+  ######## Set name of Y axis
+  ylab(label = "
+  φ (PFU/fish/day)
+       ")+
+  ############ panel style
+  theme_classic() +
+  theme(panel.border = element_rect(color = "black", fill = NA, linewidth = 6),
+        panel.background = element_rect(fill = "white"))+
+  theme(axis.line = element_line(linewidth = 2))+
+  ######## Set name of X axis
+  xlab(label = "
+  Temperature (°C)
+       ")+
+  #scale on high definition
+  theme(axis.text=element_text(size=100),
+        axis.title=element_text(size=100,face="bold"),
+        title =  element_text(size = 100))
+
+
+#############################################################################################################################
+############################################### creation of the plots #######################################################
+#############################################################################################################################
+
+png(filename = "Param.png", height = 4500, width = 6400, res = 100 )# name and resolution of the file
+# making a grid with the multiple plots
+grid.arrange(alphaPlot, gammaPlot,
+             fPlot,cPlot, 
+             rPlot, 
+             ncol = 2)
+dev.off() #send the plot on the chosen working directory
